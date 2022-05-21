@@ -1,22 +1,26 @@
-from importlib.resources import contents
-import re
+from re import template
 from unicodedata import category
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import NewsForm
 from .models import News, Category
+from .utils import MyMixin
 
 
-class HomeNews(ListView):
+class HomeNews(MyMixin, ListView):
     model = News
     template_name = 'news/home_news_list.html'
     context_object_name = 'news'
+    mixin_prop = 'hello world'
     # extra_context = {'title': 'Главная'}
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Главная страница'
+        context['title'] = self.get_upper('Главная страница')
+        context['mixin_prop'] = self.get_prop()
         return context
 
     def get_queryset(self):
@@ -33,7 +37,7 @@ class HomeNews(ListView):
 #    return render(request, 'news/index.html', context=context)
 
 
-class NewsByCategory(ListView):
+class NewsByCategory(MyMixin, ListView):
     model = News
     template_name = 'news/home_news_list.html'
     context_object_name = 'news'
@@ -41,7 +45,8 @@ class NewsByCategory(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = Category.objects.get(pk=self.kwargs['category_id'])
+        context['title'] = self.get_upper(
+            Category.objects.get(pk=self.kwargs['category_id']))
         return context
 
     def get_queryset(self):
@@ -57,8 +62,8 @@ class NewsByCategory(ListView):
 class ViewNews(DetailView):
     model = News
     context_object_name = 'news_item'
-    #template_name = 'news/news_detail.html'
-    #pk_url_kwarg = 'news_id'
+    # template_name = 'news/news_detail.html'
+    # pk_url_kwarg = 'news_id'
 
 
 # def view_news(request, news_id):
@@ -68,15 +73,23 @@ class ViewNews(DetailView):
 #    return render(request, 'news/view_news.html', {"news_item": news_item})
 
 
-def add_news(request):
-    if request.method == 'POST':
-        form = NewsForm(request.POST)
-        if form.is_valid():
-            # print(form.cleaned_data)
-            # news = News.objects.create(**form.cleaned_data)
-            news = form.save()
-            return redirect(news)
-    else:
-        form = NewsForm()
+class CreateNews(LoginRequiredMixin, CreateView):
+    form_class = NewsForm
+    template_name = 'news/add_news.html'
+    # success_url = reverse_lazy('home')
+    login_url = '/admin/'
+    raise_exception = True
 
-    return render(request, 'news/add_news.html', {'form': form})
+
+# def add_news(request):
+#    if request.method == 'POST':
+#        form = NewsForm(request.POST)
+#        if form.is_valid():
+#            # print(form.cleaned_data)
+#            # news = News.objects.create(**form.cleaned_data)
+#            news = form.save()
+#            return redirect(news)
+#    else:
+#        form = NewsForm()
+
+#    return render(request, 'news/add_news.html', {'form': form})
