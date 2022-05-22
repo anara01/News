@@ -1,3 +1,4 @@
+from email import message
 from re import template
 from unicodedata import category
 from django.shortcuts import render, get_object_or_404, redirect
@@ -6,9 +7,10 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 
-from .forms import NewsForm
+from .forms import NewsForm, UserRefisterForm
 from .models import News, Category
 from .utils import MyMixin
+from django.contrib import messages
 
 
 def test(request):
@@ -105,3 +107,35 @@ class CreateNews(LoginRequiredMixin, CreateView):
 #        form = NewsForm()
 
 #    return render(request, 'news/add_news.html', {'form': form})
+
+
+# def register(request):
+#    if request.method == 'POST':
+#        form = UserCreationForm(request.POST)
+#        if form.is_valid():
+#            form.save()
+#			messages.success(request, 'Вы успешно зарегистрировались')
+#			return redirect('login')
+#		else:
+#			messages.error(request, 'Ошибка регистрации')
+#	else:
+#		form = UserCreationForm()
+
+#	return render(request, 'news/register.html', {"form": form})
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRefisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Вы успешно зарегистрировались')
+            return redirect('login')
+        else:
+            messages.error(request, 'Ошибка регистрации')
+    else:
+        form = UserRefisterForm()
+    return render(request, 'news/register.html', {"form": form})
+
+
+def login(request):
+    return render(request, 'news/login.html')
