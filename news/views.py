@@ -14,6 +14,9 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 
 
+from django.contrib.auth.views import LoginView
+
+
 def test(request):
     objects = ['john1', 'paul2', 'george3', 'ringo4',
                'john5', 'paul6', 'george7']
@@ -124,31 +127,52 @@ class CreateNews(LoginRequiredMixin, CreateView):
 
 #	return render(request, 'news/register.html', {"form": form})
 
-def register(request):
-    if request.method == 'POST':
-        form = UserRefisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Вы успешно зарегистрировались')
-            return redirect('home')
-        else:
-            messages.error(request, 'Ошибка регистрации')
-    else:
-        form = UserRefisterForm()
-    return render(request, 'news/register.html', {"form": form})
+
+class RegisterUser(CreateView):
+    form_class = UserRefisterForm
+    template_name = 'news/register.html'
+    success_url = reverse_lazy('login')
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        messages.success(self.request, 'Вы успешно зарегистрировались')
+        return redirect('home')
 
 
-def user_login(request):
-    if request.method == 'POST':
-        form = UserLoginForm(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('home')
-    else:
-        form = UserLoginForm()
-    return render(request, 'news/login.html', {"form": form})
+# def register(request):
+#    if request.method == 'POST':
+#        form = UserRefisterForm(request.POST)
+#        if form.is_valid():
+#            user = form.save()
+#            login(request, user)
+#            messages.success(request, 'Вы успешно зарегистрировались')
+#            return redirect('home')
+#        else:
+#            messages.error(request, 'Ошибка регистрации')
+#    else:
+#        form = UserRefisterForm()
+#    return render(request, 'news/register.html', {"form": form})
+
+
+class LoginUser(LoginView):
+    form_class = UserLoginForm
+    template_name = 'news/login.html'
+
+    def get_success_url(self):
+        return reverse_lazy('home')
+
+
+# def user_login(request):
+#    if request.method == 'POST':
+#        form = UserLoginForm(data=request.POST)
+#        if form.is_valid():
+#            user = form.get_user()
+#            login(request, user)
+#            return redirect('home')
+#    else:
+#        form = UserLoginForm()
+#    return render(request, 'news/login.html', {"form": form})
 
 
 def user_logout(request):
